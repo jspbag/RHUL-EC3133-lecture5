@@ -1,0 +1,752 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="generator" content="pandoc">
+  <title>Instrumental variables regression</title>
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, minimal-ui">
+  <link rel="stylesheet" href="index_files/reveal.js-3.3.0.1/css/reveal.css"/>
+
+
+<style type="text/css">
+code.sourceCode > span { display: inline-block; line-height: 1.25; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode { white-space: pre; position: relative; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+code.sourceCode { white-space: pre-wrap; }
+code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+    color: #aaaaaa;
+  }
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+code span.at { color: #7d9029; } /* Attribute */
+code span.bn { color: #40a070; } /* BaseN */
+code span.bu { } /* BuiltIn */
+code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+code span.ch { color: #4070a0; } /* Char */
+code span.cn { color: #880000; } /* Constant */
+code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+code span.dt { color: #902000; } /* DataType */
+code span.dv { color: #40a070; } /* DecVal */
+code span.er { color: #ff0000; font-weight: bold; } /* Error */
+code span.ex { } /* Extension */
+code span.fl { color: #40a070; } /* Float */
+code span.fu { color: #06287e; } /* Function */
+code span.im { } /* Import */
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+code span.op { color: #666666; } /* Operator */
+code span.ot { color: #007020; } /* Other */
+code span.pp { color: #bc7a00; } /* Preprocessor */
+code span.sc { color: #4070a0; } /* SpecialChar */
+code span.ss { color: #bb6688; } /* SpecialString */
+code span.st { color: #4070a0; } /* String */
+code span.va { color: #19177c; } /* Variable */
+code span.vs { color: #4070a0; } /* VerbatimString */
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+</style>
+
+<link rel="stylesheet" href="index_files/reveal.js-3.3.0.1/css/theme/solarized.css" id="theme">
+
+
+  <!-- some tweaks to reveal css -->
+  <style type="text/css">
+    .reveal h1 { font-size: 2.0em; }
+    .reveal h2 { font-size: 1.5em;  }
+    .reveal h3 { font-size: 1.25em;	}
+    .reveal h4 { font-size: 1em;	}
+
+    .reveal .slides>section,
+    .reveal .slides>section>section {
+      padding: 0px 0px;
+    }
+
+
+
+    .reveal table {
+      border-width: 1px;
+      border-spacing: 2px;
+      border-style: dotted;
+      border-color: gray;
+      border-collapse: collapse;
+      font-size: 0.7em;
+    }
+
+    .reveal table th {
+      border-width: 1px;
+      padding-left: 10px;
+      padding-right: 25px;
+      font-weight: bold;
+      border-style: dotted;
+      border-color: gray;
+    }
+
+    .reveal table td {
+      border-width: 1px;
+      padding-left: 10px;
+      padding-right: 25px;
+      border-style: dotted;
+      border-color: gray;
+    }
+
+
+  </style>
+
+    <style type="text/css">code{white-space: pre;}</style>
+
+    <link rel="stylesheet" href="mystyle.css"/>
+
+<!-- Printing and PDF exports -->
+<script id="paper-css" type="application/dynamic-css">
+
+/* Default Print Stylesheet Template
+   by Rob Glazebrook of CSSnewbie.com
+   Last Updated: June 4, 2008
+
+   Feel free (nay, compelled) to edit, append, and
+   manipulate this file as you see fit. */
+
+
+@media print {
+
+	/* SECTION 1: Set default width, margin, float, and
+	   background. This prevents elements from extending
+	   beyond the edge of the printed page, and prevents
+	   unnecessary background images from printing */
+	html {
+		background: #fff;
+		width: auto;
+		height: auto;
+		overflow: visible;
+	}
+	body {
+		background: #fff;
+		font-size: 20pt;
+		width: auto;
+		height: auto;
+		border: 0;
+		margin: 0 5%;
+		padding: 0;
+		overflow: visible;
+		float: none !important;
+	}
+
+	/* SECTION 2: Remove any elements not needed in print.
+	   This would include navigation, ads, sidebars, etc. */
+	.nestedarrow,
+	.controls,
+	.fork-reveal,
+	.share-reveal,
+	.state-background,
+	.reveal .progress,
+	.reveal .backgrounds {
+		display: none !important;
+	}
+
+	/* SECTION 3: Set body font face, size, and color.
+	   Consider using a serif font for readability. */
+	body, p, td, li, div {
+		font-size: 20pt!important;
+		font-family: Georgia, "Times New Roman", Times, serif !important;
+		color: #000;
+	}
+
+	/* SECTION 4: Set heading font face, sizes, and color.
+	   Differentiate your headings from your body text.
+	   Perhaps use a large sans-serif for distinction. */
+	h1,h2,h3,h4,h5,h6 {
+		color: #000!important;
+		height: auto;
+		line-height: normal;
+		font-family: Georgia, "Times New Roman", Times, serif !important;
+		text-shadow: 0 0 0 #000 !important;
+		text-align: left;
+		letter-spacing: normal;
+	}
+	/* Need to reduce the size of the fonts for printing */
+	h1 { font-size: 28pt !important;  }
+	h2 { font-size: 24pt !important; }
+	h3 { font-size: 22pt !important; }
+	h4 { font-size: 22pt !important; font-variant: small-caps; }
+	h5 { font-size: 21pt !important; }
+	h6 { font-size: 20pt !important; font-style: italic; }
+
+	/* SECTION 5: Make hyperlinks more usable.
+	   Ensure links are underlined, and consider appending
+	   the URL to the end of the link for usability. */
+	a:link,
+	a:visited {
+		color: #000 !important;
+		font-weight: bold;
+		text-decoration: underline;
+	}
+	/*
+	.reveal a:link:after,
+	.reveal a:visited:after {
+		content: " (" attr(href) ") ";
+		color: #222 !important;
+		font-size: 90%;
+	}
+	*/
+
+
+	/* SECTION 6: more reveal.js specific additions by @skypanther */
+	ul, ol, div, p {
+		visibility: visible;
+		position: static;
+		width: auto;
+		height: auto;
+		display: block;
+		overflow: visible;
+		margin: 0;
+		text-align: left !important;
+	}
+	.reveal pre,
+	.reveal table {
+		margin-left: 0;
+		margin-right: 0;
+	}
+	.reveal pre code {
+		padding: 20px;
+		border: 1px solid #ddd;
+	}
+	.reveal blockquote {
+		margin: 20px 0;
+	}
+	.reveal .slides {
+		position: static !important;
+		width: auto !important;
+		height: auto !important;
+
+		left: 0 !important;
+		top: 0 !important;
+		margin-left: 0 !important;
+		margin-top: 0 !important;
+		padding: 0 !important;
+		zoom: 1 !important;
+
+		overflow: visible !important;
+		display: block !important;
+
+		text-align: left !important;
+		-webkit-perspective: none;
+		   -moz-perspective: none;
+		    -ms-perspective: none;
+		        perspective: none;
+
+		-webkit-perspective-origin: 50% 50%;
+		   -moz-perspective-origin: 50% 50%;
+		    -ms-perspective-origin: 50% 50%;
+		        perspective-origin: 50% 50%;
+	}
+	.reveal .slides section {
+		visibility: visible !important;
+		position: static !important;
+		width: auto !important;
+		height: auto !important;
+		display: block !important;
+		overflow: visible !important;
+
+		left: 0 !important;
+		top: 0 !important;
+		margin-left: 0 !important;
+		margin-top: 0 !important;
+		padding: 60px 20px !important;
+		z-index: auto !important;
+
+		opacity: 1 !important;
+
+		page-break-after: always !important;
+
+		-webkit-transform-style: flat !important;
+		   -moz-transform-style: flat !important;
+		    -ms-transform-style: flat !important;
+		        transform-style: flat !important;
+
+		-webkit-transform: none !important;
+		   -moz-transform: none !important;
+		    -ms-transform: none !important;
+		        transform: none !important;
+
+		-webkit-transition: none !important;
+		   -moz-transition: none !important;
+		    -ms-transition: none !important;
+		        transition: none !important;
+	}
+	.reveal .slides section.stack {
+		padding: 0 !important;
+	}
+	.reveal section:last-of-type {
+		page-break-after: avoid !important;
+	}
+	.reveal section .fragment {
+		opacity: 1 !important;
+		visibility: visible !important;
+
+		-webkit-transform: none !important;
+		   -moz-transform: none !important;
+		    -ms-transform: none !important;
+		        transform: none !important;
+	}
+	.reveal section img {
+		display: block;
+		margin: 15px 0px;
+		background: rgba(255,255,255,1);
+		border: 1px solid #666;
+		box-shadow: none;
+	}
+
+	.reveal section small {
+		font-size: 0.8em;
+	}
+
+}  
+</script>
+
+
+<script id="pdf-css" type="application/dynamic-css">
+    
+/**
+ * This stylesheet is used to print reveal.js
+ * presentations to PDF.
+ *
+ * https://github.com/hakimel/reveal.js#pdf-export
+ */
+
+* {
+	-webkit-print-color-adjust: exact;
+}
+
+body {
+	margin: 0 auto !important;
+	border: 0;
+	padding: 0;
+	float: none !important;
+	overflow: visible;
+}
+
+html {
+	width: 100%;
+	height: 100%;
+	overflow: visible;
+}
+
+/* Remove any elements not needed in print. */
+.nestedarrow,
+.reveal .controls,
+.reveal .progress,
+.reveal .playback,
+.reveal.overview,
+.fork-reveal,
+.share-reveal,
+.state-background {
+	display: none !important;
+}
+
+h1, h2, h3, h4, h5, h6 {
+	text-shadow: 0 0 0 #000 !important;
+}
+
+.reveal pre code {
+	overflow: hidden !important;
+	font-family: Courier, 'Courier New', monospace !important;
+}
+
+ul, ol, div, p {
+	visibility: visible;
+	position: static;
+	width: auto;
+	height: auto;
+	display: block;
+	overflow: visible;
+	margin: auto;
+}
+.reveal {
+	width: auto !important;
+	height: auto !important;
+	overflow: hidden !important;
+}
+.reveal .slides {
+	position: static;
+	width: 100%;
+	height: auto;
+
+	left: auto;
+	top: auto;
+	margin: 0 !important;
+	padding: 0 !important;
+
+	overflow: visible;
+	display: block;
+
+	-webkit-perspective: none;
+	   -moz-perspective: none;
+	    -ms-perspective: none;
+	        perspective: none;
+
+	-webkit-perspective-origin: 50% 50%; /* there isn't a none/auto value but 50-50 is the default */
+	   -moz-perspective-origin: 50% 50%;
+	    -ms-perspective-origin: 50% 50%;
+	        perspective-origin: 50% 50%;
+}
+
+.reveal .slides section {
+	page-break-after: always !important;
+
+	visibility: visible !important;
+	position: relative !important;
+	display: block !important;
+	position: relative !important;
+
+	margin: 0 !important;
+	padding: 0 !important;
+	box-sizing: border-box !important;
+	min-height: 1px;
+
+	opacity: 1 !important;
+
+	-webkit-transform-style: flat !important;
+	   -moz-transform-style: flat !important;
+	    -ms-transform-style: flat !important;
+	        transform-style: flat !important;
+
+	-webkit-transform: none !important;
+	   -moz-transform: none !important;
+	    -ms-transform: none !important;
+	        transform: none !important;
+}
+
+.reveal section.stack {
+	margin: 0 !important;
+	padding: 0 !important;
+	page-break-after: avoid !important;
+	height: auto !important;
+	min-height: auto !important;
+}
+
+.reveal img {
+	box-shadow: none;
+}
+
+.reveal .roll {
+	overflow: visible;
+	line-height: 1em;
+}
+
+/* Slide backgrounds are placed inside of their slide when exporting to PDF */
+.reveal section .slide-background {
+	display: block !important;
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	z-index: -1;
+}
+
+/* All elements should be above the slide-background */
+.reveal section>* {
+	position: relative;
+	z-index: 1;
+}
+
+/* Display slide speaker notes when 'showNotes' is enabled */
+.reveal .speaker-notes-pdf {
+	display: block;
+	width: 100%;
+	max-height: none;
+	left: auto;
+	top: auto;
+	z-index: 100;
+}
+
+/* Display slide numbers when 'slideNumber' is enabled */
+.reveal .slide-number-pdf {
+	display: block;
+	position: absolute;
+	font-size: 14px;
+}
+
+</script>
+
+
+<script>
+var style = document.createElement( 'style' );
+style.type = 'text/css';
+var style_script_id = window.location.search.match( /print-pdf/gi ) ? 'pdf-css' : 'paper-css';
+var style_script = document.getElementById(style_script_id).text;
+style.innerHTML = style_script;
+document.getElementsByTagName('head')[0].appendChild(style);
+</script>
+
+    <link href="index_files/font-awesome-5.1.0/css/all.css" rel="stylesheet" />
+    <link href="index_files/font-awesome-5.1.0/css/v4-shims.css" rel="stylesheet" />
+</head>
+<body>
+  <div class="reveal">
+    <div class="slides">
+
+
+<section class="slide level2">
+
+<section>
+<h1>
+Instrumental variables regression
+</h1>
+<p>Based on Stock and Watson, ch. 12</p>
+<p><br></p>
+<h2>
+<a href="mailto:jesper.bagger@rhul.ac.uk">Jesper Bagger</a>
+</h2>
+<h3>
+EC3133 | Royal Holloway | 2020/21
+</h3>
+</section>
+</section>
+<section><section id="simultaneous-causality" class="title-slide slide level1"><h1>Simultaneous causality</h1></section><section id="estimating-a-demand-function" class="slide level2">
+<h2>Estimating a demand function</h2>
+<p><img data-src="index_files/figure-revealjs/unnamed-chunk-2-1.png" /><!-- --></p>
+</section><section id="estimating-a-demand-function-1" class="slide level2">
+<h2>Estimating a demand function</h2>
+<p><img data-src="index_files/figure-revealjs/unnamed-chunk-3-1.png" /><!-- --></p>
+</section><section id="estimating-a-demand-function-2" class="slide level2">
+<h2>Estimating a demand function</h2>
+<p><img data-src="index_files/figure-revealjs/unnamed-chunk-4-1.png" /><!-- --></p>
+</section><section id="estimating-a-demand-function-3" class="slide level2">
+<h2>Estimating a demand function</h2>
+<p><img data-src="index_files/figure-revealjs/unnamed-chunk-5-1.png" /><!-- --></p>
+</section><section id="estimating-a-demand-function-4" class="slide level2">
+<h2>Estimating a demand function</h2>
+<ul>
+<li><p>Fitting a line to equilibrium price and quantity data by OLS estimates neither a demand nor a supply function</p></li>
+<li><p>Problem: prices and quantities have been <strong>simultaneously</strong> determined by changes in both demand and supply</p></li>
+<li><p>Solution: find third variable that shifts supply only, called an <strong>instrumental variable</strong></p></li>
+</ul>
+</section><section id="estimating-a-demand-function-5" class="slide level2">
+<h2>Estimating a demand function</h2>
+<p><img data-src="index_files/figure-revealjs/unnamed-chunk-6-1.png" /><!-- --></p>
+</section></section>
+<section><section id="the-two-stage-least-squares-estimator" class="title-slide slide level1"><h1>The two stage least squares estimator</h1></section><section id="iv-regression-model-for-cigarette-consumption" class="slide level2">
+<h2>IV regression model for cigarette consumption</h2>
+<p><span class="math display">\[\ln Q^{\text{cig}}_i = \beta_0 + \beta_1 \ln P^{\text{cig}}_i + \beta_2 \ln Inc_i + u_i\]</span></p>
+<ul>
+<li><p><span class="math inline">\(Q^{\text{cig}}_i\)</span> is cigarette consumption in US state <span class="math inline">\(i\)</span></p></li>
+<li><p><span class="math inline">\(P^{\text{cig}}_i\)</span> is the real after-tax cigarette price in US state <span class="math inline">\(i\)</span></p>
+<p>Regressor <span class="math inline">\(P^{\text{cig}}_i\)</span> is <strong>endogenous</strong> due to simultaneity</p></li>
+<li><p><span class="math inline">\(Inc_i\)</span> is real per-capita state income in US state <span class="math inline">\(i\)</span></p>
+<p>Regressor <span class="math inline">\(Inc_i\)</span> is treated as an <strong>exogenous</strong> variable</p></li>
+<li><p><span class="math inline">\(u_i\)</span> is an error term (omitted variables, measurement errors)</p></li>
+<li><p><span class="math inline">\(SalesTax_i\)</span> is real sales tax per pack in US state <span class="math inline">\(i\)</span></p>
+<p>Variable <span class="math inline">\(SalesTax_i\)</span> is an <strong>instrumental variable</strong></p></li>
+</ul>
+</section><section id="over--under--or-exact-identification-of-beta_1" class="slide level2">
+<h2>Over-, under-, or exact-identification of <span class="math inline">\(\beta_1\)</span></h2>
+<p>Parameter of interest is <span class="math inline">\(\beta_1\)</span>: the own price elasticity of cigarette consumption</p>
+<ul>
+<li><p>The parameter <span class="math inline">\(\beta_1\)</span> is <strong>over-identified</strong> if there are more than one instrumental variable</p></li>
+<li><p>The parameter <span class="math inline">\(\beta_1\)</span> is <strong>under-identified</strong> if there are no instrumental variables</p></li>
+<li><p>The parameter <span class="math inline">\(\beta_1\)</span> is <strong>exact-identified</strong> if there is exactly one instrumental variable</p></li>
+</ul>
+</section><section id="two-stage-least-squares-2sls" class="slide level2">
+<h2>Two stage least squares (2SLS)</h2>
+<div class="box">
+<p>The 2SLS estimator in the general IV regression model is computed in two stages</p>
+<ol type="1">
+<li><p><strong>First stage regression:</strong> regress <span class="math inline">\(P^{\text{cig}}_i\)</span> on <span class="math inline">\(SalesTax_i\)</span> and <span class="math inline">\(Inc_i\)</span> using OLS. Compute fitted value <span class="math inline">\(\hat{P}^{\text{cig}}_i\)</span>.</p></li>
+<li><p><strong>Second stage regression:</strong> regress <span class="math inline">\(Q^{\text{cig}}_i\)</span> on <span class="math inline">\(\hat{P}^{\text{cig}}_i\)</span> and <span class="math inline">\(Inc_i\)</span> using OLS. The 2SLS estimator <span class="math inline">\(\hat{\beta}_{1,2SLS}\)</span> of <span class="math inline">\(\beta_1\)</span> is the estimator of <span class="math inline">\(\beta_1\)</span> from the second stage</p></li>
+</ol>
+</div>
+</section><section id="the-iv-regression-assumptions" class="slide level2">
+<h2>The IV regression assumptions</h2>
+<div class="box">
+<p>The variables and errors in the IV regression model satisfy the following conditions</p>
+<ol type="1">
+<li><p><span class="math inline">\(\mathrm{E}(u_i|Inc_i) = 0\)</span></p></li>
+<li><p><span class="math inline">\((Q^{\text{cig}}_i,P^{\text{cig}},Inc_i,SalesTax_i; i=1,\ldots,n)\)</span> are i.i.d.</p></li>
+<li><p><span class="math inline">\(Q^{\text{cig}}_i\)</span>, <span class="math inline">\(P^{\text{cig}}_i\)</span>, <span class="math inline">\(Inc_i\)</span>, and <span class="math inline">\(SalesTax_i\)</span> have nonzero finite 4th moments</p></li>
+<li><p>The instrumental variable <span class="math inline">\(SalesTax_i\)</span> is valid</p></li>
+</ol>
+</div>
+</section><section id="instrument-validity" class="slide level2">
+<h2>Instrument validity</h2>
+<div class="box">
+<p>The instrumental variable <span class="math inline">\(SalesTax_i\)</span> must satisfy the following two conditions to be valid</p>
+<ul>
+<li><p>Instrument relevance: the coefficient on <span class="math inline">\(SalesTax_i\)</span> in the first stage population regression must be nonzero</p></li>
+<li><p>Instrument exogeneity: <span class="math inline">\(SalesTax_i\)</span> is uncorrelated with the error term <span class="math inline">\(u_i\)</span> in the population regression model: <span class="math inline">\(\mathrm{cov}(SalesTax_i,u_i) = 0\)</span></p></li>
+</ul>
+</div>
+</section><section id="sampling-distribution-of-hatbeta_12sls" class="slide level2">
+<h2>Sampling distribution of <span class="math inline">\(\hat{\beta}_{1,2SLS}\)</span></h2>
+<div class="box">
+<p>Under the IV regression assumptions, the 2SLS estimator <span class="math inline">\(\hat{\beta}_{1,2SLS}\)</span> is a consistent and asymptotically normal distributed estimator of <span class="math inline">\(\beta_1\)</span>:</p>
+<p><span class="math display">\[\hat{\beta}_{1,2SLS} \overset{p}{\rightarrow} \beta_1\]</span> and, at least in large samples,</p>
+<p><span class="math display">\[\hat{\beta}_{1,2SLS} \overset{\text{approx.}}{\sim} \mathcal{N}\left(\beta_1,\sigma_{\hat{\beta}_{1,2SLS}}^2\right),\]</span></p>
+</div>
+</section><section id="intuition-from-2sls-procedure" class="slide level2">
+<h2>Intuition from 2SLS procedure</h2>
+<ul>
+<li><p>First stage regression split <span class="math inline">\(P^{\text{cig}}_i\)</span> into exogenous and endogenous component</p>
+<p><span class="math display">\[P^{\text{cig}}_i = \underset{\hat{P}^{\text{cig}}_i}{\underbrace{\hat{\pi}_0 + \hat{\pi}_1 SalesTax_i}} + \hat{w}_i \]</span></p></li>
+<li><p>Second stage uses only the exogenous component <span class="math inline">\(\hat{P}^{\text{cig}}_i\)</span> as a regressor in the cigarette demand equation, and OLS therefore consistently estimate <span class="math inline">\(\beta_1\)</span> in the second stage</p></li>
+</ul>
+</section></section>
+<section><section id="implementation-of-2sls-in-r" class="title-slide slide level1"><h1>Implementation of 2SLS in R</h1></section><section id="data" class="slide level2">
+<h2>Data</h2>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1"></a><span class="kw">library</span>(AER) <span class="co"># Load Applied Econometrics with R library</span></span>
+<span id="cb1-2"><a href="#cb1-2"></a><span class="kw">library</span>(parameters) <span class="co"># Load parameters library </span></span>
+<span id="cb1-3"><a href="#cb1-3"></a><span class="kw">data</span>(CigarettesSW) <span class="co"># Load CigarettesSW data from AER library</span></span>
+<span id="cb1-4"><a href="#cb1-4"></a><span class="co"># Construct useful variables</span></span>
+<span id="cb1-5"><a href="#cb1-5"></a>CigarettesSW<span class="fl">.1995</span> &lt;-<span class="st"> </span><span class="kw">subset</span>(CigarettesSW, year <span class="op">==</span><span class="st"> &quot;1995&quot;</span>) <span class="co"># Select 1995 cross section</span></span>
+<span id="cb1-6"><a href="#cb1-6"></a>CigarettesSW<span class="fl">.1995</span><span class="op">$</span>price &lt;-<span class="st"> </span>CigarettesSW<span class="fl">.1995</span><span class="op">$</span>price<span class="op">/</span>CigarettesSW<span class="fl">.1995</span><span class="op">$</span>cpi <span class="co"># Real price (1995 prices)</span></span>
+<span id="cb1-7"><a href="#cb1-7"></a>CigarettesSW<span class="fl">.1995</span><span class="op">$</span>income &lt;-<span class="st"> </span>CigarettesSW<span class="fl">.1995</span><span class="op">$</span>income<span class="op">/</span>CigarettesSW<span class="fl">.1995</span><span class="op">$</span>cpi <span class="co"># Real income (1995 prices)</span></span>
+<span id="cb1-8"><a href="#cb1-8"></a>CigarettesSW<span class="fl">.1995</span><span class="op">$</span>taxs &lt;-<span class="st"> </span>CigarettesSW<span class="fl">.1995</span><span class="op">$</span>taxs<span class="op">/</span>CigarettesSW<span class="fl">.1995</span><span class="op">$</span>cpi <span class="co"># Real excise tax incl sales tax (1995 prices)</span></span>
+<span id="cb1-9"><a href="#cb1-9"></a>CigarettesSW<span class="fl">.1995</span><span class="op">$</span>tax &lt;-<span class="st"> </span>CigarettesSW<span class="fl">.1995</span><span class="op">$</span>tax<span class="op">/</span>CigarettesSW<span class="fl">.1995</span><span class="op">$</span>cpi <span class="co"># Real excise tax (1995 prices)</span></span>
+<span id="cb1-10"><a href="#cb1-10"></a>CigarettesSW<span class="fl">.1995</span><span class="op">$</span>SalesTax &lt;-<span class="st"> </span>CigarettesSW<span class="fl">.1995</span><span class="op">$</span>taxs <span class="op">-</span><span class="st"> </span>CigarettesSW<span class="fl">.1995</span><span class="op">$</span>tax <span class="co"># Real sales tax (1995)</span></span>
+<span id="cb1-11"><a href="#cb1-11"></a>CigarettesSW<span class="fl">.1995</span><span class="op">$</span>incprcap &lt;-<span class="st"> </span>CigarettesSW<span class="fl">.1995</span><span class="op">$</span>income<span class="op">/</span>CigarettesSW<span class="fl">.1995</span><span class="op">$</span>population <span class="co"># Real income/cap</span></span></code></pre></div>
+</section><section id="naive-ols-regression-in-r" class="slide level2">
+<h2>Naive OLS regression in R</h2>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1"></a><span class="co"># Naive OLS estimator</span></span>
+<span id="cb2-2"><a href="#cb2-2"></a>lm.ols &lt;-<span class="st"> </span><span class="kw">lm</span>(<span class="kw">log</span>(packs) <span class="op">~</span><span class="st"> </span><span class="kw">log</span>(price) <span class="op">+</span><span class="st"> </span><span class="kw">log</span>(incprcap), <span class="dt">data =</span> CigarettesSW<span class="fl">.1995</span>)</span>
+<span id="cb2-3"><a href="#cb2-3"></a><span class="kw">parameters</span>(lm.ols, <span class="dt">robust=</span><span class="ot">TRUE</span>, <span class="dt">vcov_type=</span><span class="st">&quot;HC1&quot;</span>) <span class="co"># Compute and print robust SEs</span></span></code></pre></div>
+<pre><code>## Parameter      | Coefficient |   SE |         95% CI |     t | df |      p
+## --------------------------------------------------------------------------
+## (Intercept)    |       10.34 | 0.97 | [ 8.40, 12.29] | 10.70 | 45 | &lt; .001
+## price [log]    |       -1.41 | 0.26 | [-1.93, -0.88] | -5.39 | 45 | &lt; .001
+## incprcap [log] |        0.34 | 0.26 | [-0.18,  0.87] |  1.32 | 45 | 0.193</code></pre>
+</section><section id="first-stage-regression-in-r" class="slide level2">
+<h2>First stage regression in R</h2>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1"></a><span class="co"># First stage regression: log price on SaleTax and Income</span></span>
+<span id="cb4-2"><a href="#cb4-2"></a>lm<span class="fl">.1</span>st.stage &lt;-<span class="st"> </span><span class="kw">lm</span>(<span class="kw">log</span>(price) <span class="op">~</span><span class="st"> </span>SalesTax <span class="op">+</span><span class="st"> </span><span class="kw">log</span>(incprcap), <span class="dt">data =</span> CigarettesSW<span class="fl">.1995</span>)</span>
+<span id="cb4-3"><a href="#cb4-3"></a><span class="kw">parameters</span>(lm<span class="fl">.1</span>st.stage, <span class="dt">robust=</span><span class="ot">TRUE</span>, <span class="dt">vcov_type=</span><span class="st">&quot;HC1&quot;</span>) <span class="co"># Compute and print robust SEs</span></span></code></pre></div>
+<pre><code>## Parameter      | Coefficient |   SE |       95% CI |     t | df |      p
+## ------------------------------------------------------------------------
+## (Intercept)    |        3.59 | 0.17 | [3.24, 3.94] | 20.79 | 45 | &lt; .001
+## SalesTax       |        0.03 | 0.00 | [0.02, 0.04] |  6.69 | 45 | &lt; .001
+## incprcap [log] |        0.39 | 0.07 | [0.26, 0.52] |  5.95 | 45 | &lt; .001</code></pre>
+</section><section id="second-stage-regression-in-r" class="slide level2">
+<h2>Second stage regression in R</h2>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1"></a><span class="co"># Second stage regression: log packs on fitted 1st stage values and Income</span></span>
+<span id="cb6-2"><a href="#cb6-2"></a>lm<span class="fl">.2</span>nd.stage &lt;-<span class="st"> </span><span class="kw">lm</span>(<span class="kw">log</span>(packs) <span class="op">~</span><span class="st"> </span>lm<span class="fl">.1</span>st.stage<span class="op">$</span>fitted.values <span class="op">+</span><span class="st"> </span><span class="kw">log</span>(incprcap), <span class="dt">data =</span> CigarettesSW<span class="fl">.1995</span>)</span>
+<span id="cb6-3"><a href="#cb6-3"></a><span class="kw">parameters</span>(lm<span class="fl">.2</span>nd.stage, <span class="dt">robust=</span><span class="ot">TRUE</span>, <span class="dt">vcov_type=</span><span class="st">&quot;HC1&quot;</span>) <span class="co"># Compute and print robust SEs</span></span></code></pre></div>
+<pre><code>## Parameter                  | Coefficient |   SE |         95% CI |     t | df |      p
+## --------------------------------------------------------------------------------------
+## (Intercept)                |        9.43 | 1.41 | [ 6.59, 12.27] |  6.68 | 45 | &lt; .001
+## lm.1st.stage$fitted.values |       -1.14 | 0.41 | [-1.97, -0.32] | -2.79 | 45 | 0.008 
+## incprcap [log]             |        0.21 | 0.35 | [-0.49,  0.92] |  0.62 | 45 | 0.541</code></pre>
+</section><section id="sls-regression-in-r" class="slide level2">
+<h2>2SLS regression in R</h2>
+<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1"></a><span class="co"># IV regression of weeks worked on morekids w/ exogenous regressors, using samesex as IV</span></span>
+<span id="cb8-2"><a href="#cb8-2"></a>iv<span class="fl">.2</span>sls &lt;-<span class="st"> </span><span class="kw">ivreg</span>(<span class="kw">log</span>(packs) <span class="op">~</span><span class="st"> </span><span class="kw">log</span>(price) <span class="op">+</span><span class="st"> </span><span class="kw">log</span>(incprcap)  <span class="op">|</span><span class="st"> </span>SalesTax <span class="op">+</span><span class="st"> </span><span class="kw">log</span>(incprcap), <span class="dt">data =</span> CigarettesSW<span class="fl">.1995</span>)</span>
+<span id="cb8-3"><a href="#cb8-3"></a><span class="kw">parameters</span>(iv<span class="fl">.2</span>sls, <span class="dt">robust=</span><span class="ot">TRUE</span>, <span class="dt">vcov_type=</span><span class="st">&quot;HC1&quot;</span>) <span class="co"># Compute and print robust SEs</span></span></code></pre></div>
+<pre><code>## Parameter      | Coefficient |   SE |         95% CI |     t | df |      p
+## --------------------------------------------------------------------------
+## (Intercept)    |        9.43 | 1.26 | [ 6.89, 11.97] |  7.49 | 45 | &lt; .001
+## price [log]    |       -1.14 | 0.37 | [-1.89, -0.39] | -3.07 | 45 | 0.004 
+## incprcap [log] |        0.21 | 0.31 | [-0.41,  0.84] |  0.69 | 45 | 0.495</code></pre>
+</section></section>
+<section><section id="summary" class="title-slide slide level1"><h1>Summary</h1></section><section id="summary-1" class="slide level2">
+<h2>Summary</h2>
+<ul>
+<li><p>IV regressions offers a way to estimate causal effects in the presence of endogenous regressors</p></li>
+<li><p>For an instrumental variable to be valid, it must be (1) correlated with the endogenous regressor, and (2) exogenous</p></li>
+<li><p>The 2SLS estimator has two stages</p>
+<ul>
+<li><p>First stage: regress endogenous regressor on IV and exogenous regressors</p></li>
+<li><p>Second stage: regress dependent variable on fitted values from first stage and exogenous regressors</p></li>
+</ul></li>
+<li><p>Implement 2SLS in R by <code>ivreg</code> from <code>AER</code> library</p></li>
+</ul>
+</section></section>
+    </div>
+  </div>
+
+  <script src="index_files/reveal.js-3.3.0.1/lib/js/head.min.js"></script>
+  <script src="index_files/reveal.js-3.3.0.1/js/reveal.js"></script>
+
+  <script>
+
+      // Full list of configuration options available at:
+      // https://github.com/hakimel/reveal.js#configuration
+      Reveal.initialize({
+        // Display the page number of the current slide
+        slideNumber: true,
+        // Push each slide change to the browser history
+        history: true,
+        // Vertical centering of slides
+        center: true,
+        // Opens links in an iframe preview overlay
+        previewLinks: false,
+        // Transition style
+        transition: 'none', // none/fade/slide/convex/concave/zoom
+        // Transition style for full page slide backgrounds
+        backgroundTransition: 'none', // none/fade/slide/convex/concave/zoom
+
+        menu: {
+          numbers: true,
+          custom: false,
+          themes: false,
+          transitions: false
+        },
+
+
+
+        // Optional reveal.js plugins
+        dependencies: [
+          { src: 'index_files/reveal.js-3.3.0.1/plugin/menu/menu.js', async: true },
+        ]
+      });
+    </script>
+  <!-- dynamically load mathjax for compatibility with self-contained -->
+  <script>
+    (function () {
+      var script = document.createElement("script");
+      script.type = "text/javascript";
+      script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+      document.getElementsByTagName("head")[0].appendChild(script);
+    })();
+  </script>
+
+<script>
+  (function() {
+    if (window.jQuery) {
+      Reveal.addEventListener( 'slidechanged', function(event) {  
+        window.jQuery(event.previousSlide).trigger('hidden');
+        window.jQuery(event.currentSlide).trigger('shown');
+      });
+    }
+  })();
+</script>
+
+
+  </body>
+</html>

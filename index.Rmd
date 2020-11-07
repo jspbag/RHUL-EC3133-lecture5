@@ -1,0 +1,565 @@
+---
+pagetitle: Instrumental variables regression
+output: 
+  revealjs::revealjs_presentation:
+    incremental: false
+    theme: solarized
+    self_contained: false
+    # reveal_plugins: ["menu","notes","chalkboard"]
+    reveal_plugins: ["menu"]
+    highlight: pygments
+    center: true
+    transition: none
+    background_transition: none 
+    reveal_options:
+      # chalkboard:
+      #   theme: whiteboard
+      #   toggleNotesButton: true
+      #   toggleChalkboardButton: true
+      menu:
+        numbers: true
+      slideNumber: true
+      previewLinks: false
+    fig_caption: true
+    pandoc_args:
+    - --indented-code-classes
+    - lineNumbers
+    css: mystyle.css
+    
+--- 
+
+<section>
+
+<h1>Instrumental variables regression</h1>
+
+Based on Stock and Watson, ch. 12
+
+<br>
+
+<h2>[Jesper Bagger](mailto:jesper.bagger@rhul.ac.uk)</h2>
+
+<h3>EC3133 | Royal Holloway | 2020/21</h3>
+
+</section>
+
+```{r results='asis', echo=FALSE, include=FALSE}
+library(AER) # Load Applied Econometrics with R library
+library(parameters) # Load parameters library 
+data(CigarettesSW) # Load CigarettesSW data
+```
+
+# Simultaneous causality
+
+
+## Estimating a demand function
+
+```{r, echo = FALSE}    
+# Regression functions
+d.fct.1 <- function(x){10-x}
+d.fct.2 <- function(x){12-x}
+d.fct.3 <- function(x){8-x}
+s.fct.1 <- function(x){x}
+s.fct.2 <- function(x){4 + x}
+s.fct.3 <- function(x){x-4}
+# Plot demand function 1
+curve(d.fct.1, 
+      from = 0, to = 9, # Range of evaluations
+      xlab = "Quantity", # Label on x-axis
+      ylab = "Price", # Label on y-axis
+      xlim = c(0, 10),  # Range of x-axis (from 25 to 34)
+      ylim = c(0, 10), # Range of y-axis (from 2 to 3.5) 
+      lwd = 3, # Set linewidth to 3
+      col = "blue", # Make the plotted line blue
+      xaxt='n',  # Suppress x axis ticks
+      yaxt='n') # Suppress y axis ticks
+# Plot demand function 2
+# curve(d.fct.2, 
+#       from = 2, to = 10, # Range of evaluations
+#       lwd = 3, # Set linewidth to 3
+#       lty = 2, # Set dashed linetype 
+#       col = "blue", # Make the plotted line blue
+#       add = TRUE) # Add second curve to current plot
+# # Plot supply function 3
+# curve(d.fct.3, 
+#       from = 0, to = 8, # Range of evaluations
+#       lwd = 3, # Set linewidth to 3
+#       lty = 3, # Set dotted linetype 
+#       col = "blue", # Make the plotted line blue
+#       add = TRUE) # Add second curve to current plot
+# Plot supply function 1
+curve(s.fct.1, 
+      from = 0, to = 9, # Range of evaluations
+      lwd = 3, # Set linewidth to 3
+      col = "red", # Make the plotted line blue
+      add = TRUE) # Add second curve to current plot
+# Plot supply function 2
+# curve(s.fct.2, 
+#       from = 0, to = 6, # Range of evaluations
+#       lwd = 3, # Set linewidth to 3
+#       lty = 2, # Set dashed linetype 
+#       col = "red", # Make the plotted line blue
+#       add = TRUE) # Add second curve to current plot
+# # Plot supply function 3
+# curve(s.fct.3, 
+#       from = 4, to = 10, # Range of evaluations
+#       lwd = 3, # Set linewidth to 3
+#       lty = 3, # Set dashed linetype 
+#       col = "red", # Make the plotted line blue
+#       add = TRUE) # Add second curve to current plot
+text(9, 0.5, 
+     labels = expression("Demand"), 
+     cex = 1.5,
+     col = "blue")
+text(9, 9.5, 
+     labels = expression("Supply"), 
+     cex = 1.5,
+     col = "red")
+# Data points
+points(5,5, cex = 2,pch = 21, col = "green", bg = "green")
+# points(6,2, cex = 2,pch = 21, col = "green", bg = "green")
+# points(4,8, cex = 2,pch = 21, col = "green", bg = "green")
+# # OLS regression line
+# abline(20,-3,lwd=3,col="green")
+```
+
+## Estimating a demand function
+
+```{r, echo = FALSE}       
+# Regression functions
+# d.fct.1 <- function(x){10-x}
+# d.fct.2 <- function(x){12-x}
+# d.fct.3 <- function(x){8-x}
+# s.fct.1 <- function(x){x}
+# s.fct.2 <- function(x){4 + x}
+# s.fct.3 <- function(x){x-4}
+# Plot demand function 1
+curve(d.fct.1,
+      from = 0, to = 9, # Range of evaluations
+      xlab = "Quantity", # Label on x-axis
+      ylab = "Price", # Label on y-axis
+      xlim = c(0, 10),  # Range of x-axis (from 25 to 34)
+      ylim = c(0, 10), # Range of y-axis (from 2 to 3.5)
+      lwd = 3, # Set linewidth to 3
+      col = "white", # Make the plotted line blue
+      xaxt='n',  # Suppress x axis ticks
+      yaxt='n') # Suppress y axis ticks
+# Plot demand function 2
+# curve(d.fct.2, 
+#       from = 2, to = 10, # Range of evaluations
+#       lwd = 3, # Set linewidth to 3
+#       lty = 2, # Set dashed linetype 
+#       col = "blue", # Make the plotted line blue
+#       add = TRUE) # Add second curve to current plot
+# # Plot supply function 3
+# curve(d.fct.3, 
+#       from = 0, to = 8, # Range of evaluations
+#       lwd = 3, # Set linewidth to 3
+#       lty = 3, # Set dotted linetype 
+#       col = "blue", # Make the plotted line blue
+#       add = TRUE) # Add second curve to current plot
+# Plot supply function 1
+# curve(s.fct.1, 
+#       from = 0, to = 9, # Range of evaluations
+#       lwd = 3, # Set linewidth to 3
+#       col = "red", # Make the plotted line blue
+#       add = TRUE) # Add second curve to current plot
+# Plot supply function 2
+# curve(s.fct.2, 
+#       from = 0, to = 6, # Range of evaluations
+#       lwd = 3, # Set linewidth to 3
+#       lty = 2, # Set dashed linetype 
+#       col = "red", # Make the plotted line blue
+#       add = TRUE) # Add second curve to current plot
+# # Plot supply function 3
+# curve(s.fct.3, 
+#       from = 4, to = 10, # Range of evaluations
+#       lwd = 3, # Set linewidth to 3
+#       lty = 3, # Set dashed linetype 
+#       col = "red", # Make the plotted line blue
+#       add = TRUE) # Add second curve to current plot
+# text(9, 0.5, 
+#      labels = expression("Demand"), 
+#      cex = 1.5,
+#      col = "blue")
+# text(9, 9.5, 
+#      labels = expression("Supply"), 
+#      cex = 1.5,
+#      col = "red")
+# Data points
+points(5,5, cex = 2,pch = 21, col = "green", bg = "green")
+points(6,2, cex = 2,pch = 21, col = "green", bg = "green")
+points(4,8, cex = 2,pch = 21, col = "green", bg = "green")
+# # OLS regression line
+# abline(20,-3,lwd=3,col="green")
+```
+
+## Estimating a demand function
+
+```{r, echo = FALSE}    
+# Regression functions
+# d.fct.1 <- function(x){10-x}
+# d.fct.2 <- function(x){12-x}
+# d.fct.3 <- function(x){8-x}
+# s.fct.1 <- function(x){x}
+# s.fct.2 <- function(x){4 + x}
+# s.fct.3 <- function(x){x-4}
+# Plot demand function 1
+curve(d.fct.1,
+      from = 0, to = 9, # Range of evaluations
+      xlab = "Quantity", # Label on x-axis
+      ylab = "Price", # Label on y-axis
+      xlim = c(0, 10),  # Range of x-axis (from 25 to 34)
+      ylim = c(0, 10), # Range of y-axis (from 2 to 3.5)
+      lwd = 3, # Set linewidth to 3
+      col = "white", # Make the plotted line blue
+      xaxt='n',  # Suppress x axis ticks
+      yaxt='n') # Suppress y axis ticks
+# Plot demand function 2
+# curve(d.fct.2, 
+#       from = 2, to = 10, # Range of evaluations
+#       lwd = 3, # Set linewidth to 3
+#       lty = 2, # Set dashed linetype 
+#       col = "blue", # Make the plotted line blue
+#       add = TRUE) # Add second curve to current plot
+# # Plot supply function 3
+# curve(d.fct.3, 
+#       from = 0, to = 8, # Range of evaluations
+#       lwd = 3, # Set linewidth to 3
+#       lty = 3, # Set dotted linetype 
+#       col = "blue", # Make the plotted line blue
+#       add = TRUE) # Add second curve to current plot
+# Plot supply function 1
+# curve(s.fct.1, 
+#       from = 0, to = 9, # Range of evaluations
+#       lwd = 3, # Set linewidth to 3
+#       col = "red", # Make the plotted line blue
+#       add = TRUE) # Add second curve to current plot
+# Plot supply function 2
+# curve(s.fct.2, 
+#       from = 0, to = 6, # Range of evaluations
+#       lwd = 3, # Set linewidth to 3
+#       lty = 2, # Set dashed linetype 
+#       col = "red", # Make the plotted line blue
+#       add = TRUE) # Add second curve to current plot
+# # Plot supply function 3
+# curve(s.fct.3, 
+#       from = 4, to = 10, # Range of evaluations
+#       lwd = 3, # Set linewidth to 3
+#       lty = 3, # Set dashed linetype 
+#       col = "red", # Make the plotted line blue
+#       add = TRUE) # Add second curve to current plot
+# text(9, 0.5, 
+#      labels = expression("Demand"), 
+#      cex = 1.5,
+#      col = "blue")
+# text(9, 9.5, 
+#      labels = expression("Supply"), 
+#      cex = 1.5,
+#      col = "red")
+# Data points
+points(5,5, cex = 2,pch = 21, col = "green", bg = "green")
+points(6,2, cex = 2,pch = 21, col = "green", bg = "green")
+points(4,8, cex = 2,pch = 21, col = "green", bg = "green")
+# OLS regression line
+abline(20,-3,lwd=3,col="green")
+```
+
+## Estimating a demand function
+
+```{r, echo = FALSE}    
+# Regression functions
+# d.fct.1 <- function(x){10-x}
+# d.fct.2 <- function(x){12-x}
+# d.fct.3 <- function(x){8-x}
+# s.fct.1 <- function(x){x}
+# s.fct.2 <- function(x){4 + x}
+# s.fct.3 <- function(x){x-4}
+# Plot demand function 1
+curve(d.fct.1, 
+      from = 0, to = 9, # Range of evaluations
+      xlab = "Quantity", # Label on x-axis
+      ylab = "Price", # Label on y-axis
+      xlim = c(0, 10),  # Range of x-axis (from 25 to 34)
+      ylim = c(0, 10), # Range of y-axis (from 2 to 3.5) 
+      lwd = 3, # Set linewidth to 3
+      col = "blue", # Make the plotted line blue
+      xaxt='n',  # Suppress x axis ticks
+      yaxt='n') # Suppress y axis ticks
+# Plot demand function 2
+curve(d.fct.2, 
+      from = 2, to = 10, # Range of evaluations
+      lwd = 3, # Set linewidth to 3
+      lty = 2, # Set dashed linetype 
+      col = "blue", # Make the plotted line blue
+      add = TRUE) # Add second curve to current plot
+# Plot supply function 3
+curve(d.fct.3, 
+      from = 0, to = 8, # Range of evaluations
+      lwd = 3, # Set linewidth to 3
+      lty = 3, # Set dotted linetype 
+      col = "blue", # Make the plotted line blue
+      add = TRUE) # Add second curve to current plot
+# Plot supply function 1
+curve(s.fct.1, 
+      from = 0, to = 9, # Range of evaluations
+      lwd = 3, # Set linewidth to 3
+      col = "red", # Make the plotted line blue
+      add = TRUE) # Add second curve to current plot
+# Plot supply function 2
+curve(s.fct.2, 
+      from = 0, to = 6, # Range of evaluations
+      lwd = 3, # Set linewidth to 3
+      lty = 2, # Set dashed linetype 
+      col = "red", # Make the plotted line blue
+      add = TRUE) # Add second curve to current plot
+# Plot supply function 3
+curve(s.fct.3, 
+      from = 4, to = 10, # Range of evaluations
+      lwd = 3, # Set linewidth to 3
+      lty = 3, # Set dashed linetype 
+      col = "red", # Make the plotted line blue
+      add = TRUE) # Add second curve to current plot
+text(9, 0.5, 
+     labels = expression("Demand"), 
+     cex = 1.5,
+     col = "blue")
+text(9, 9.5, 
+     labels = expression("Supply"), 
+     cex = 1.5,
+     col = "red")
+# Data points
+points(5,5, cex = 2,pch = 21, col = "green", bg = "green")
+points(6,2, cex = 2,pch = 21, col = "green", bg = "green")
+points(4,8, cex = 2,pch = 21, col = "green", bg = "green")
+# OLS regression line
+abline(20,-3,lwd=3,col="green")
+```
+
+## Estimating a demand function
+
+- Fitting a line to equilibrium price and quantity data by OLS estimates neither a demand nor a supply function
+
+- Problem: prices and quantities have been **simultaneously** determined by changes in both demand and supply
+
+- Solution: find third variable that shifts supply only, called an **instrumental variable**
+
+## Estimating a demand function
+
+```{r, echo = FALSE}       
+# Regression functions
+# d.fct.1 <- function(x){10-x}
+# d.fct.2 <- function(x){12-x}
+# d.fct.3 <- function(x){8-x}
+# s.fct.1 <- function(x){x}
+# s.fct.2 <- function(x){4 + x}
+# s.fct.3 <- function(x){x-4}
+# Plot demand function 1
+curve(d.fct.1, 
+      from = 0, to = 9, # Range of evaluations
+      xlab = "Quantity", # Label on x-axis
+      ylab = "Price", # Label on y-axis
+      xlim = c(0, 10),  # Range of x-axis (from 25 to 34)
+      ylim = c(0, 10), # Range of y-axis (from 2 to 3.5) 
+      lwd = 3, # Set linewidth to 3
+      col = "blue") # Suppress y axis ticks
+# Plot demand function 2
+# curve(d.fct.2, 
+#       from = 2, to = 10, # Range of evaluations
+#       lwd = 3, # Set linewidth to 3
+#       lty = 2, # Set dashed linetype 
+#       col = "blue", # Make the plotted line blue
+#       add = TRUE) # Add second curve to current plot
+# Plot supply function 3
+# curve(d.fct.3, 
+#       from = 0, to = 8, # Range of evaluations
+#       lwd = 3, # Set linewidth to 3
+#       lty = 3, # Set dotted linetype 
+#       col = "blue", # Make the plotted line blue
+#       add = TRUE) # Add second curve to current plot
+# Plot supply function 1
+curve(s.fct.1, 
+      from = 0, to = 9, # Range of evaluations
+      lwd = 3, # Set linewidth to 3
+      col = "red", # Make the plotted line blue
+      add = TRUE) # Add second curve to current plot
+# Plot supply function 2
+curve(s.fct.2, 
+      from = 0, to = 6, # Range of evaluations
+      lwd = 3, # Set linewidth to 3
+      lty = 2, # Set dashed linetype 
+      col = "red", # Make the plotted line blue
+      add = TRUE) # Add second curve to current plot
+# Plot supply function 3
+curve(s.fct.3, 
+      from = 4, to = 10, # Range of evaluations
+      lwd = 3, # Set linewidth to 3
+      lty = 3, # Set dashed linetype 
+      col = "red", # Make the plotted line blue
+      add = TRUE) # Add second curve to current plot
+text(9, 0.5, 
+     labels = expression("Demand"), 
+     cex = 1.5,
+     col = "blue")
+text(9, 9.5, 
+     labels = expression("Supply"), 
+     cex = 1.5,
+     col = "red")
+# Data points
+points(5,5, cex = 2,pch = 21, col = "green", bg = "green")
+points(7,3, cex = 2,pch = 21, col = "green", bg = "green")
+points(3,7, cex = 2,pch = 21, col = "green", bg = "green")
+# OLS regression line
+abline(10,-1,lwd=3,col="green")
+```
+
+# The two stage least squares estimator
+
+## IV regression model for cigarette consumption
+
+$$\ln Q^{\text{cig}}_i = \beta_0 + \beta_1 \ln P^{\text{cig}}_i + \beta_2 \ln Inc_i + u_i$$
+
+- $Q^{\text{cig}}_i$ is cigarette consumption in US state $i$
+
+- $P^{\text{cig}}_i$ is the real after-tax cigarette price in US state $i$
+
+  Regressor $P^{\text{cig}}_i$ is **endogenous** due to simultaneity
+
+- $Inc_i$ is real per-capita state income in US state $i$
+
+  Regressor $Inc_i$ is treated as an **exogenous** variable
+
+- $u_i$ is an error term (omitted variables, measurement errors)
+
+- $SalesTax_i$ is real sales tax per pack in US state $i$
+
+  Variable $SalesTax_i$ is an **instrumental variable**
+  
+## Over-, under-, or exact-identification of $\beta_1$
+
+Parameter of interest is $\beta_1$: the own price elasticity of cigarette consumption 
+
+- The parameter $\beta_1$ is **over-identified** if there are more than one instrumental variable
+
+- The parameter $\beta_1$ is **under-identified** if there are no instrumental variables
+
+- The parameter $\beta_1$ is **exact-identified** if there is exactly one instrumental variable
+
+## Two stage least squares (2SLS)
+
+<div class="box">
+The 2SLS estimator in the general IV regression model is computed in two stages
+
+1. **First stage regression:** regress $P^{\text{cig}}_i$ on $SalesTax_i$ and $Inc_i$ using OLS. Compute fitted value $\hat{P}^{\text{cig}}_i$.
+
+2. **Second stage regression:** regress $Q^{\text{cig}}_i$ on $\hat{P}^{\text{cig}}_i$ and $Inc_i$ using OLS. The 2SLS estimator $\hat{\beta}_{1,2SLS}$ of $\beta_1$ is the estimator of $\beta_1$ from the second stage
+</div>
+
+## The IV regression assumptions
+
+<div class="box">
+The variables and errors in the IV regression model satisfy the following conditions
+
+1. $\mathrm{E}(u_i|Inc_i) = 0$
+
+2. $(Q^{\text{cig}}_i,P^{\text{cig}},Inc_i,SalesTax_i; i=1,\ldots,n)$ are i.i.d.
+
+3. $Q^{\text{cig}}_i$, $P^{\text{cig}}_i$, $Inc_i$, and $SalesTax_i$ have nonzero finite 4th moments
+
+4. The instrumental variable $SalesTax_i$ is valid
+</div>
+
+## Instrument validity
+
+<div class="box">
+The instrumental variable $SalesTax_i$ must satisfy the following two conditions to be valid
+
+- Instrument relevance: the coefficient on $SalesTax_i$ in the first stage population regression must be nonzero 
+
+- Instrument exogeneity: $SalesTax_i$ is uncorrelated with the error term $u_i$ in the population regression model: $\mathrm{cov}(SalesTax_i,u_i) = 0$ 
+</div>
+
+## Sampling distribution of $\hat{\beta}_{1,2SLS}$
+
+<div class="box">
+Under the  IV regression assumptions, the 2SLS estimator $\hat{\beta}_{1,2SLS}$ is a consistent and asymptotically normal distributed estimator of $\beta_1$: 
+
+$$\hat{\beta}_{1,2SLS} \overset{p}{\rightarrow} \beta_1$$
+and, at least in large samples,
+
+$$\hat{\beta}_{1,2SLS} \overset{\text{approx.}}{\sim} \mathcal{N}\left(\beta_1,\sigma_{\hat{\beta}_{1,2SLS}}^2\right),$$
+</div>
+
+
+## Intuition from 2SLS procedure
+
+- First stage regression split $P^{\text{cig}}_i$ into exogenous and endogenous component
+
+  $$P^{\text{cig}}_i = \underset{\hat{P}^{\text{cig}}_i}{\underbrace{\hat{\pi}_0 + \hat{\pi}_1 SalesTax_i}} + \hat{w}_i $$
+
+- Second stage uses only the exogenous component $\hat{P}^{\text{cig}}_i$ as a regressor in the cigarette demand equation, and OLS therefore consistently estimate $\beta_1$ in the second stage
+
+# Implementation of 2SLS in R
+
+## Data
+
+```{r, echo = TRUE, eval = TRUE}    
+library(AER) # Load Applied Econometrics with R library
+library(parameters) # Load parameters library 
+data(CigarettesSW) # Load CigarettesSW data from AER library
+# Construct useful variables
+CigarettesSW.1995 <- subset(CigarettesSW, year == "1995") # Select 1995 cross section
+CigarettesSW.1995$price <- CigarettesSW.1995$price/CigarettesSW.1995$cpi # Real price (1995 prices)
+CigarettesSW.1995$income <- CigarettesSW.1995$income/CigarettesSW.1995$cpi # Real income (1995 prices)
+CigarettesSW.1995$taxs <- CigarettesSW.1995$taxs/CigarettesSW.1995$cpi # Real excise tax incl sales tax (1995 prices)
+CigarettesSW.1995$tax <- CigarettesSW.1995$tax/CigarettesSW.1995$cpi # Real excise tax (1995 prices)
+CigarettesSW.1995$SalesTax <- CigarettesSW.1995$taxs - CigarettesSW.1995$tax # Real sales tax (1995)
+CigarettesSW.1995$incprcap <- CigarettesSW.1995$income/CigarettesSW.1995$population # Real income/cap
+```
+
+## Naive OLS regression in R
+
+```{r, echo = TRUE, eval = TRUE}    
+# Naive OLS estimator
+lm.ols <- lm(log(packs) ~ log(price) + log(incprcap), data = CigarettesSW.1995)
+parameters(lm.ols, robust=TRUE, vcov_type="HC1") # Compute and print robust SEs
+```
+
+## First stage regression in R
+
+```{r, echo = TRUE, eval = TRUE}    
+# First stage regression: log price on SaleTax and Income
+lm.1st.stage <- lm(log(price) ~ SalesTax + log(incprcap), data = CigarettesSW.1995)
+parameters(lm.1st.stage, robust=TRUE, vcov_type="HC1") # Compute and print robust SEs
+```
+
+## Second stage regression in R
+
+```{r, echo = TRUE, eval = TRUE}    
+# Second stage regression: log packs on fitted 1st stage values and Income
+lm.2nd.stage <- lm(log(packs) ~ lm.1st.stage$fitted.values + log(incprcap), data = CigarettesSW.1995)
+parameters(lm.2nd.stage, robust=TRUE, vcov_type="HC1") # Compute and print robust SEs
+```
+
+## 2SLS regression in R
+
+```{r, echo = TRUE, eval = TRUE}    
+# IV regression of weeks worked on morekids w/ exogenous regressors, using samesex as IV
+iv.2sls <- ivreg(log(packs) ~ log(price) + log(incprcap)  | SalesTax + log(incprcap), data = CigarettesSW.1995)
+parameters(iv.2sls, robust=TRUE, vcov_type="HC1") # Compute and print robust SEs
+```
+
+# Summary
+
+## Summary
+
+- IV regressions offers a way to estimate causal effects in the presence of endogenous regressors
+
+- For an instrumental variable to be valid, it must be (1) correlated with the endogenous regressor, and (2) exogenous
+
+- The 2SLS estimator has two stages
+
+  - First stage: regress endogenous regressor on IV and exogenous regressors
+  
+  - Second stage: regress dependent variable on fitted values from first stage and exogenous regressors
+  
+- Implement 2SLS in R by `ivreg` from `AER` library
